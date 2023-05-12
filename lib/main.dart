@@ -1,7 +1,4 @@
-import 'dart:html';
-
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 void main() {
   runApp(const MyApp());
@@ -87,23 +84,33 @@ class _MyHomePageState extends State<MyHomePage> {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
-                OutlinedButton(
-                  style: TextButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    // minimumSize:
+                  ElevatedButton(
+                    onPressed: _openCreateModal,
+                    style: TextButton.styleFrom(
+                      backgroundColor: const Color.fromRGBO(255, 255, 255, 1.0),
+                      minimumSize: Size(MediaQuery.of(context).size.width - 50.0, 50.0),
+                      shape: const ContinuousRectangleBorder(
+                          side: BorderSide(
+                              width: 2.0
+                          )
+                      ),
+                    ),
+                    child: const Text(''),
                   ),
-                  // style: Alignment.centerLeft,
-                  onPressed: _openCreateModal,
-                  child: const Text(''),
-                ),
-                OutlinedButton(
-                  style: TextButton.styleFrom(
-                    backgroundColor: Colors.white,
+                  ElevatedButton(
+                    onPressed: _openCreateModal,
+                    style: TextButton.styleFrom(
+                      foregroundColor: Colors.black,
+                      minimumSize: const Size(50.0, 50.0),
+                      backgroundColor: const Color.fromRGBO(255, 255, 255, 1.0),
+                      shape: const ContinuousRectangleBorder(
+                          side: BorderSide(
+                              width: 2.0
+                          )
+                      ),
+                    ),
+                    child: const Text('+'),
                   ),
-                  // style: Alignment.centerLeft,
-                  onPressed: _openCreateModal,
-                  child: const Text('+'),
-                ),
               ],
             ),
           ],
