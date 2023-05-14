@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:to_do_list/task-form-modal.dart';
 
-import 'create-task-buttons.dart';
+import 'package:to_do_list/task-form-modal.dart';
+import 'package:to_do_list/create-task-buttons.dart';
+import 'package:to_do_list/task.dart';
 
 void main() {
   runApp(const MyApp());
@@ -50,10 +51,24 @@ class MyHomePage extends StatefulWidget {
 
 class MyHomePageState extends State<MyHomePage> {
 
+  bool _isCreateModalVisible = false;
+
   void openCreateModal() {
-    // setState(() {
-    //  
-    // });
+    setState(() {
+      _isCreateModalVisible = true;
+    });
+  }
+
+  Task _createNewTask() {
+    return Task(
+      TaskType.basic,
+      '',
+      '',
+      DateTime.now(),
+      false,
+      '',
+      ''
+    );
   }
 
   @override
@@ -68,24 +83,32 @@ class MyHomePageState extends State<MyHomePage> {
       body: Center(
         // Center is a layout widget. It takes a single child and positions it
         // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Invoke "debug painting" (press "p" in the console, choose the
-          // "Toggle Debug Paint" action from the Flutter Inspector in Android
-          // Studio, or the "Toggle Debug Paint" command in Visual Studio Code)
-          // to see the wireframe for each widget.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          mainAxisAlignment: MainAxisAlignment.start,
-          children: <Widget>[
-            CreateTaskButtons(myHomePageState: this),
+        child: Stack(
+          children: [
+            Column(
+              // Column is also a layout widget. It takes a list of children and
+              // arranges them vertically. By default, it sizes itself to fit its
+              // children horizontally, and tries to be as tall as its parent.
+              //
+              // Invoke "debug painting" (press "p" in the console, choose the
+              // "Toggle Debug Paint" action from the Flutter Inspector in Android
+              // Studio, or the "Toggle Debug Paint" command in Visual Studio Code)
+              // to see the wireframe for each widget.
+              //
+              // Column has various properties to control how it sizes itself and
+              // how it positions its children. Here we use mainAxisAlignment to
+              // center the children vertically; the main axis here is the vertical
+              // axis because Columns are vertical (the cross axis would be
+              // horizontal).
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: <Widget>[
+                CreateTaskButtons(myHomePageState: this),
+              ],
+            ),
+            Visibility(
+              visible: _isCreateModalVisible,
+              child: TaskFormModal(_createNewTask()),
+            ),
           ],
         ),
       ),
