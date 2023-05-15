@@ -51,11 +51,18 @@ class MyHomePage extends StatefulWidget {
 
 class MyHomePageState extends State<MyHomePage> {
 
-  bool _isCreateModalVisible = false;
+  bool isModalVisible = false;
+  late final TaskFormModal taskFormModal;
+
+  MyHomePageState() {
+    TaskFormModal.task = _createNewTask();
+    taskFormModal = TaskFormModal(this);
+  }
 
   void openCreateModal() {
     setState(() {
-      _isCreateModalVisible = true;
+      taskFormModal.task = _createNewTask();
+      isModalVisible = true;
     });
   }
 
@@ -65,9 +72,7 @@ class MyHomePageState extends State<MyHomePage> {
       '',
       '',
       DateTime.now(),
-      false,
-      '',
-      ''
+      false
     );
   }
 
@@ -106,8 +111,8 @@ class MyHomePageState extends State<MyHomePage> {
               ],
             ),
             Visibility(
-              visible: _isCreateModalVisible,
-              child: TaskFormModal(_createNewTask()),
+              visible: isModalVisible,
+              child: taskFormModal,
             ),
           ],
         ),

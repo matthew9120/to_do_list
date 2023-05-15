@@ -1,32 +1,84 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
+import 'package:to_do_list/helper.dart';
+import 'package:to_do_list/main.dart';
 import 'package:to_do_list/task.dart';
 
 class TaskFormModal extends StatefulWidget {
-  const TaskFormModal(this._task, {super.key});
 
-  final Task _task;
+  final MyHomePageState _myHomePageState;
+  static late Task task;
+
+  const TaskFormModal(this._myHomePageState, {super.key});
 
   @override
-  State<StatefulWidget> createState() => _TaskFormModalState(_task);
+  State<StatefulWidget> createState() => TaskFormModalState(task, _myHomePageState);
 }
 
-class _TaskFormModalState extends State<StatefulWidget> {
-  _TaskFormModalState(this._task);
+class TaskFormModalState extends State<StatefulWidget> {
 
-  final Task _task;
+  Task _task;
+  late final MyHomePageState _myHomePageState;
 
-  final TextEditingController _titleController = TextEditingController();
-  final TextEditingController _descriptionController = TextEditingController();
-  final TextEditingController _dueDateController = TextEditingController();
-  final TextEditingController _phoneController = TextEditingController();
-  final TextEditingController _emailController = TextEditingController();
+  late TextEditingController _titleController;
+  late TextEditingController _descriptionController;
+  late TextEditingController _dueDateController;
+  late TextEditingController _phoneController;
+  late TextEditingController _emailController;
 
-  bool _isEmailType = false;
-  bool _isPhoneType = false;
+  String? _dateErrorText;
+
+  TaskFormModalState(this._task, this._myHomePageState) {
+    _setValuesFromTask();
+  }
+
+  void _setValuesFromTask() {
+    _titleController = TextEditingController(text: _task.title);
+    _descriptionController = TextEditingController(text: _task.description);
+    String date = '${_task.dueDate.day}.${Helper.getMonthFormatted(_task.dueDate)}.${_task.dueDate.year}';
+    _dueDateController = TextEditingController(text: date);
+    _phoneController = TextEditingController(text: _task.phone);
+    _emailController = TextEditingController(text: _task.email);
+  }
 
   void _save() {
+    
+  }
 
+  void _saveAndClose() {
+    _task.title = _titleController.text;
+
+    DateTime inputDate;
+    try {
+      inputDate = Helper.parseDate(_dueDateController.text);
+    } catch (e) {
+      setState(() {
+        _dateErrorText = 'Invalid date format';
+      });
+      return;
+    }
+
+    setState(() {
+      _dateErrorText = null;
+    });
+
+    _task.dueDate = inputDate;
+    _task.phone = _phoneController.text;
+    _task.email = _emailController.text;
+    _task.description = _titleController.text;
+
+    _save();
+    
+    _myHomePageState.setState(() {
+      _myHomePageState.isModalVisible = false;
+    });
+  }
+  
+  void _changeTaskType(dynamic selectedType) {
+    setState(() {
+      _task.taskType = selectedType;
+    });
   }
 
   @override
@@ -72,8 +124,37 @@ class _TaskFormModalState extends State<StatefulWidget> {
               border: OutlineInputBorder(),
             ),
           ),
+          Container(
+            alignment: Alignment.centerLeft,
+            margin: const EdgeInsets.only(
+              bottom: 20.0,
+            ),
+            child: const Text('Task type:'),
+          ),
+          DropdownButtonFormField(
+            value: TaskType.basic,
+            isExpanded: true,
+            decoration: const InputDecoration(
+              border: OutlineInputBorder(),
+            ),
+            items: const <DropdownMenuItem>[
+              DropdownMenuItem<TaskType>(
+                value: TaskType.basic,
+                child: Text('Task to do')
+              ),
+              DropdownMenuItem<TaskType>(
+                value: TaskType.email,
+                child: Text('Send an e-mail'),
+              ),
+              DropdownMenuItem<TaskType>(
+                value: TaskType.phone,
+                child: Text('Make a phone call'),
+              ),
+            ],
+            onChanged: _changeTaskType
+          ),
           Visibility(
-            visible: _isPhoneType,
+            visible: _task.isPhoneType,
             child: Container(
               margin: const EdgeInsets.only(
                   top: 20.0,
@@ -84,31 +165,39 @@ class _TaskFormModalState extends State<StatefulWidget> {
             ),
           ),
           Visibility(
-            visible: _isPhoneType,
+            visible: _task.isPhoneType,
             child: TextField(
               controller: _phoneController,
               keyboardType: TextInputType.phone,
+              maxLength: 9,
+              inputFormatters: <TextInputFormatter>[
+                FilteringTextInputFormatter.digitsOnly,
+              ],
               decoration: const InputDecoration(
                 border: OutlineInputBorder(),
               ),
             ),
           ),
           Visibility(
-            visible: _isEmailType,
+            visible: _task.isEmailType,
             child: Container(
               margin: const EdgeInsets.only(
                   top: 20.0,
                   bottom: 20.0
               ),
               alignment: Alignment.centerLeft,
-              child: const Text('Phone:'),
+              child: const Text('E-mail:'),
             ),
           ),
           Visibility(
-            visible: _isEmailType,
+            visible: _task.isEmailType,
             child: TextField(
               controller: _emailController,
-              keyboardType: TextInputType.phone,
+              maxLength: 255,
+              inputFormatters: <TextInputFormatter>[
+                FilteringTextInputFormatter(RegExp(r'[\w\d+@.]'), allow: true)
+              ],
+              keyboardType: TextInputType.emailAddress,
               decoration: const InputDecoration(
                 border: OutlineInputBorder(),
               ),
@@ -125,8 +214,12 @@ class _TaskFormModalState extends State<StatefulWidget> {
           TextField(
             controller: _dueDateController,
             keyboardType: TextInputType.datetime,
-            decoration: const InputDecoration(
-              border: OutlineInputBorder(),
+            inputFormatters: <TextInputFormatter>[
+              FilteringTextInputFormatter.allow(RegExp(r'[\d.]')),
+            ],
+            decoration: InputDecoration(
+              border: const OutlineInputBorder(),
+              errorText: _dateErrorText,
             ),
           ),
           Container(
@@ -146,21 +239,28 @@ class _TaskFormModalState extends State<StatefulWidget> {
               border: OutlineInputBorder(),
             ),
           ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text('Status'),
-              Checkbox(
-                value: _task.status,
-                onChanged: (status) => {
-                  if (status == true) {
-                    _task.status = true
-                  } else {
-                    _task.status = false
-                  }
-                },
-              ),
-            ],
+          Container(
+            margin: const EdgeInsets.only(
+              top: 20.0,
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text('Done'),
+                Checkbox(
+                  value: _task.status,
+                  onChanged: (status) => {
+                    setState(() {
+                      if (status == true) {
+                        _task.status = true;
+                      } else {
+                        _task.status = false;
+                      }
+                    })
+                  },
+                ),
+              ],
+            ),
           ),
           Container(
             margin: const EdgeInsets.only(
@@ -168,7 +268,7 @@ class _TaskFormModalState extends State<StatefulWidget> {
             ),
             alignment: Alignment.centerRight,
             child: ElevatedButton(
-              onPressed: _save,
+              onPressed: _saveAndClose,
               style: TextButton.styleFrom(
                 foregroundColor: Colors.black,
                 minimumSize: const Size(250.0, 70.0),
@@ -185,5 +285,11 @@ class _TaskFormModalState extends State<StatefulWidget> {
         ],
       ),
     );
+  }
+
+  Task get task => _task;
+  set task(Task task) {
+    _task = task;
+    _setValuesFromTask();
   }
 }
