@@ -20,4 +20,18 @@ class Helper {
 
     return DateTime(year, month, day);
   }
+  
+  static DateTime parseDateFromDB(String date) {
+    List<String> dateInfo = date.split(RegExp(r'-'));
+
+    int year = int.parse(dateInfo[0]);
+    int month = int.parse(dateInfo[1]);
+    int day = int.parse(dateInfo[2]);
+
+    return DateTime(year, month, day);
+  }
+
+  static String formatDate(DateTime date) {
+    return '${date.day}.${getMonthFormatted(date)}.${date.year}';
+  }
 }

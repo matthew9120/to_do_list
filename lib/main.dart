@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 
 import 'package:to_do_list/task-form-modal.dart';
 import 'package:to_do_list/create-task-buttons.dart';
+import 'package:to_do_list/task-provider.dart';
 import 'package:to_do_list/task.dart';
+import 'package:to_do_list/task-item.dart';
 
 void main() {
   runApp(const MyApp());
@@ -52,21 +54,51 @@ class MyHomePage extends StatefulWidget {
 class MyHomePageState extends State<MyHomePage> {
 
   bool isModalVisible = false;
-  late final TaskFormModal taskFormModal;
+  late TaskFormModal _taskFormModal;
+  List<Task> tasksList = List.empty(growable: true);
 
-  MyHomePageState() {
-    TaskFormModal.task = _createNewTask();
-    taskFormModal = TaskFormModal(this);
+  static late TaskProvider tasksProvider;
+
+  @override
+  void initState() {
+    super.initState();
+    _taskFormModal = TaskFormModal(getEmptyTask(), this);
+    tasksProvider = TaskProvider();
+    tasksProvider.initializeDB().whenComplete(() async {
+      await _getTasksFromDb();
+      setState(() {});
+    });
   }
 
-  void openCreateModal() {
+  Future<void> _getTasksFromDb() async {
+    final List<Task> tasksList = await tasksProvider.getTasks();
     setState(() {
-      taskFormModal.task = _createNewTask();
+      this.tasksList = tasksList;
+    });
+  }
+
+  void openModal(Task task) {
+    setState(() {
+      _taskFormModal = TaskFormModal(task, this);
       isModalVisible = true;
     });
   }
 
-  Task _createNewTask() {
+  void setAsDone(Task task) {
+    setState(() {
+      task.status = true;
+    });
+    task.save();
+  }
+
+  void deleteTask(Task task) {
+    setState(() {
+      tasksList.remove(task);
+    });
+    task.delete();
+  }
+
+  Task getEmptyTask() {
     return Task(
       TaskType.basic,
       '',
@@ -89,7 +121,7 @@ class MyHomePageState extends State<MyHomePage> {
         // Center is a layout widget. It takes a single child and positions it
         // in the middle of the parent.
         child: Stack(
-          children: [
+          children: <Widget>[
             Column(
               // Column is also a layout widget. It takes a list of children and
               // arranges them vertically. By default, it sizes itself to fit its
@@ -108,11 +140,42 @@ class MyHomePageState extends State<MyHomePage> {
               mainAxisAlignment: MainAxisAlignment.start,
               children: <Widget>[
                 CreateTaskButtons(myHomePageState: this),
+                Container(
+                  margin: const EdgeInsets.all(20.0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: <Widget>[
+                      ConstrainedBox(
+                        constraints: BoxConstraints(minHeight: 20.0, maxHeight: 500.0),
+                        child: ListView.builder(
+                          shrinkWrap: true,
+                          scrollDirection: Axis.vertical,
+                          itemCount: tasksList.length,
+                          itemBuilder: (BuildContext context, int index) {
+                            return TaskItem(tasksList[index], this);
+                          },
+                        ),
+                      ),
+                      Container(
+                        margin: const EdgeInsets.only(
+                          top: 20.0,
+                        ),
+                        alignment: Alignment.centerLeft,
+                        child: TextButton(
+                          onPressed: () => {
+                            openModal(getEmptyTask())
+                          },
+                          child: const Text('Add new'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ),
             Visibility(
               visible: isModalVisible,
-              child: taskFormModal,
+              child: _taskFormModal,
             ),
           ],
         ),
